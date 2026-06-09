@@ -1,0 +1,517 @@
+/**
+ * Admin Dashboard Logic (Authentication, Chart.js Visualizations, Excel Export)
+ */
+
+let surveyResponses = [];
+let currentFeedbackTab = 'q9';
+let adminPassword = '';
+
+// Chart.js 인스턴스 참조 보관용 객체 (재렌더링 시 destroy 필요)
+const charts = {
+  metricsAvg: null,
+  eduDates: null,
+  liked: null,
+  improved: null
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Lucide 아이콘 초기화
+  lucide.createIcons();
+
+  // 세션 스토리지에 암호 정보가 있는 경우 자동 로그인 시도
+  const savedPw = sessionStorage.getItem("admin_pw");
+  if (savedPw) {
+    document.getElementById("inputPassword").value = savedPw;
+    verifyAdmin();
+  }
+
+  // 비밀번호 입력창에서 Enter 감지
+  document.getElementById("inputPassword").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      verifyAdmin();
+    }
+  });
+});
+
+// 관리자 인증 시도
+async function verifyAdmin() {
+  const pwInput = document.getElementById("inputPassword");
+  const loginOverlay = document.getElementById("loginOverlay");
+  const adminContainer = document.getElementById("adminContainer");
+  const errorMsg = document.getElementById("loginErrorMsg");
+  const loginBtn = document.querySelector(".btn-login");
+  const originalHtml = loginBtn.innerHTML;
+
+  const pw = pwInput.value.trim();
+  if (!pw) return;
+
+  // 로딩 상태 표기
+  loginBtn.disabled = true;
+  loginBtn.innerHTML = `<span class="spinner"></span> 인증 중...`;
+  errorMsg.style.display = "none";
+
+  try {
+    // DB에서 데이터 로드 (비밀번호 검증 수행)
+    const responses = await window.dbService.getResponses(pw);
+    
+    // 인증 성공 처리
+    adminPassword = pw;
+    sessionStorage.setItem("admin_pw", pw); // 세션에 저장
+    surveyResponses = responses;
+    
+    // UI 전환
+    loginOverlay.classList.remove("active");
+    adminContainer.style.display = "flex";
+    
+    // 대시보드 및 차트 그리기
+    renderDashboard();
+    
+  } catch (error) {
+    console.error("인증 실패:", error);
+    errorMsg.innerText = error.message || "비밀번호가 올바르지 않습니다.";
+    errorMsg.style.display = "block";
+    
+    // 흔들림 이펙트
+    const loginCard = document.querySelector(".login-card");
+    loginCard.style.animation = "none";
+    setTimeout(() => {
+      loginCard.style.animation = "shake 0.4s ease";
+    }, 10);
+    
+    pwInput.value = "";
+    pwInput.focus();
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.innerHTML = originalHtml;
+  }
+}
+
+// 대시보드 데이터 새로고침
+async function loadDashboardData() {
+  const refreshBtn = document.querySelector(".btn-refresh");
+  const originalHtml = refreshBtn.innerHTML;
+  
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = `<i data-lucide="refresh-cw" class="spin-animation"></i> 로딩 중...`;
+  lucide.createIcons();
+
+  try {
+    const responses = await window.dbService.getResponses(adminPassword);
+    surveyResponses = responses;
+    renderDashboard();
+  } catch (error) {
+    console.error("새로고침 실패:", error);
+    alert("데이터를 새로 불러오는 데 실패했습니다.");
+  } finally {
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = originalHtml;
+    lucide.createIcons();
+  }
+}
+
+// 대시보드 렌더링 총괄
+function renderDashboard() {
+  renderMetrics();
+  renderCharts();
+  renderFeedback();
+}
+
+// 1. 핵심 스코어 카드 갱신
+function renderMetrics() {
+  const count = surveyResponses.length;
+  document.getElementById("metricTotalResponses").innerText = count;
+
+  if (count === 0) {
+    document.getElementById("metricAvgSatisfaction").innerHTML = `0.0 <span class="max-val">/ 5.0</span>`;
+    document.getElementById("metricNPS").innerHTML = `0.0 <span class="max-val">/ 5.0</span>`;
+    document.getElementById("metricAvgExpertise").innerHTML = `0.0 <span class="max-val">/ 5.0</span>`;
+    return;
+  }
+
+  // 만족도(q1), 추천(q6), 강사전문성(q3) 평균 계산
+  const sumQ1 = surveyResponses.reduce((acc, curr) => acc + (curr.q1 || 0), 0);
+  const sumQ6 = surveyResponses.reduce((acc, curr) => acc + (curr.q6 || 0), 0);
+  const sumQ3 = surveyResponses.reduce((acc, curr) => acc + (curr.q3 || 0), 0);
+
+  const avgQ1 = (sumQ1 / count).toFixed(1);
+  const avgQ6 = (sumQ6 / count).toFixed(1);
+  const avgQ3 = (sumQ3 / count).toFixed(1);
+
+  document.getElementById("metricAvgSatisfaction").innerHTML = `${avgQ1} <span class="max-val">/ 5.0</span>`;
+  document.getElementById("metricNPS").innerHTML = `${avgQ6} <span class="max-val">/ 5.0</span>`;
+  document.getElementById("metricAvgExpertise").innerHTML = `${avgQ3} <span class="max-val">/ 5.0</span>`;
+}
+
+// 2. Chart.js 시각화 차트 렌더링
+function renderCharts() {
+  const count = surveyResponses.length;
+  
+  // 기존 차트 파괴 (메모리 해제 및 렌더링 충돌 예방)
+  Object.keys(charts).forEach(key => {
+    if (charts[key]) {
+      charts[key].destroy();
+      charts[key] = null;
+    }
+  });
+
+  if (count === 0) return;
+
+  // 차트 테마 색상 (Apple & Tech 컨셉)
+  const colorPrimary = '#0071e3'; // Apple Blue
+  const colorSecondary = '#6e00f5'; // Tech Purple
+  const colorAccent = '#30d158'; // Success Green
+  const colorMuted = '#86868b';
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+  const gridColor = 'rgba(255, 255, 255, 0.08)';
+
+  // ChartJS 기본 글자색 설정
+  Chart.defaults.color = textColor;
+  Chart.defaults.font.family = 'Inter, -apple-system, sans-serif';
+
+  // --- 차트 1: 핵심 평가 지표 평균 (가로형 막대 차트) ---
+  const indicators = [
+    "q1 (전반 만족도)", 
+    "q2 (콘텐츠 깊이)", 
+    "q3 (강사 전문성)", 
+    "q4 (부가자료 도움)", 
+    "q5 (튜터 멘토링)", 
+    "q6 (동료 추천의사)"
+  ];
+  
+  const indicatorSums = [0, 0, 0, 0, 0, 0];
+  surveyResponses.forEach(r => {
+    indicatorSums[0] += r.q1 || 0;
+    indicatorSums[1] += r.q2 || 0;
+    indicatorSums[2] += r.q3 || 0;
+    indicatorSums[3] += r.q4 || 0;
+    indicatorSums[4] += r.q5 || 0;
+    indicatorSums[5] += r.q6 || 0;
+  });
+  
+  const indicatorAvgs = indicatorSums.map(sum => (sum / count).toFixed(2));
+
+  const ctx1 = document.getElementById('chartMetricsAvg').getContext('2d');
+  charts.metricsAvg = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: ["전반적 만족도", "콘텐츠 깊이/난이도", "강사 전문성/소통", "부가자료 도움", "튜터 멘토링", "동료 추천의향"],
+      datasets: [{
+        label: '평균 점수 (5점 만점)',
+        data: indicatorAvgs,
+        backgroundColor: [colorPrimary, colorSecondary, colorAccent, '#ff9f0a', '#545456', '#bf5af2'],
+        borderRadius: 8,
+        borderWidth: 0,
+        barThickness: 18
+      }]
+    },
+    options: {
+      indexAxis: 'y', // 가로 막대 그래프
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { 
+          min: 0, 
+          max: 5,
+          grid: { color: gridColor },
+          ticks: { stepSize: 1 }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- 차트 2: 교육 일자별 응답 분포 (세로형 막대 차트) ---
+  const dateCounts = {};
+  surveyResponses.forEach(r => {
+    dateCounts[r.eduDate] = (dateCounts[r.eduDate] || 0) + 1;
+  });
+  const dateLabels = Object.keys(dateCounts).sort();
+  const dateValues = dateLabels.map(label => dateCounts[label]);
+
+  const ctx2 = document.getElementById('chartEduDates').getContext('2d');
+  charts.eduDates = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: dateLabels.map(label => label.split(' ')[0]), // 날짜만 간략히
+      datasets: [{
+        label: '응답자 수 (명)',
+        data: dateValues,
+        backgroundColor: colorPrimary,
+        borderRadius: 6,
+        barThickness: 24
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { 
+          beginAtZero: true, 
+          grid: { color: gridColor },
+          ticks: { stepSize: 1 }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- 차트 3: 마음에 들었던 점 분석 (도넛 차트) ---
+  const q7Counts = {};
+  surveyResponses.forEach(r => {
+    if (r.q7 && Array.isArray(r.q7)) {
+      r.q7.forEach(val => {
+        q7Counts[val] = (q7Counts[val] || 0) + 1;
+      });
+    }
+  });
+  // 기타 작성 빈도 추가
+  const q7EtcCount = surveyResponses.filter(r => r.q7_etc && r.q7_etc.trim().length > 0).length;
+  if (q7EtcCount > 0) {
+    q7Counts["기타"] = q7EtcCount;
+  }
+
+  const q7Labels = Object.keys(q7Counts).sort((a,b) => q7Counts[b] - q7Counts[a]);
+  const q7Values = q7Labels.map(label => q7Counts[label]);
+
+  const ctx3 = document.getElementById('chartLikedFeatures').getContext('2d');
+  charts.liked = new Chart(ctx3, {
+    type: 'doughnut',
+    data: {
+      labels: q7Labels,
+      datasets: [{
+        data: q7Values,
+        backgroundColor: [
+          '#ff3b30', '#ff9f0a', '#34c759', '#0071e3', '#af52de', '#5856d6', '#545456', '#a1a1a6'
+        ],
+        borderWidth: 2,
+        borderColor: '#121318'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { boxWidth: 12, font: { size: 10 } }
+        }
+      },
+      cutout: '60%'
+    }
+  });
+
+  // --- 차트 4: 개선 사항 분석 (도넛 차트) ---
+  const q8Counts = {};
+  surveyResponses.forEach(r => {
+    if (r.q8 && Array.isArray(r.q8)) {
+      r.q8.forEach(val => {
+        q8Counts[val] = (q8Counts[val] || 0) + 1;
+      });
+    }
+  });
+  // 기타 작성 빈도 추가
+  const q8EtcCount = surveyResponses.filter(r => r.q8_etc && r.q8_etc.trim().length > 0).length;
+  if (q8EtcCount > 0) {
+    q8Counts["기타"] = q8EtcCount;
+  }
+
+  const q8Labels = Object.keys(q8Counts).sort((a,b) => q8Counts[b] - q8Counts[a]);
+  const q8Values = q8Labels.map(label => q8Counts[label]);
+
+  const ctx4 = document.getElementById('chartImprovedFeatures').getContext('2d');
+  charts.improved = new Chart(ctx4, {
+    type: 'doughnut',
+    data: {
+      labels: q8Labels,
+      datasets: [{
+        data: q8Values,
+        backgroundColor: [
+          '#545456', '#ff453a', '#ff9f0a', '#30d158', '#0a84ff', '#bf5af2', '#64d2ff', '#a1a1a6'
+        ],
+        borderWidth: 2,
+        borderColor: '#121318'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { boxWidth: 12, font: { size: 10 } }
+        }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+// 3. 주관식 피드백 리스트 출력
+function renderFeedback() {
+  const container = document.getElementById("feedbackList");
+  container.innerHTML = "";
+
+  let listHtml = "";
+
+  if (currentFeedbackTab === 'q9') {
+    // 9. 교육 소감
+    const items = surveyResponses.filter(r => r.q9 && r.q9.trim().length > 0);
+    if (items.length === 0) {
+      listHtml = `<p class="no-feedback">작성된 교육 소감이 없습니다.</p>`;
+    } else {
+      items.forEach(r => {
+        listHtml += createFeedbackCard(r.name, r.submittedAt, r.q9);
+      });
+    }
+  } else if (currentFeedbackTab === 'q10') {
+    // 10. 희망 교육 주제
+    const items = surveyResponses.filter(r => r.q10 && r.q10.trim().length > 0);
+    if (items.length === 0) {
+      listHtml = `<p class="no-feedback">작성된 희망 교육 주제가 없습니다.</p>`;
+    } else {
+      items.forEach(r => {
+        listHtml += createFeedbackCard(r.name, r.submittedAt, r.q10);
+      });
+    }
+  } else if (currentFeedbackTab === 'etc') {
+    // 기타 의견 (Q7기타, Q8기타 모음)
+    const items = surveyResponses.filter(r => 
+      (r.q7_etc && r.q7_etc.trim().length > 0) || 
+      (r.q8_etc && r.q8_etc.trim().length > 0)
+    );
+    
+    if (items.length === 0) {
+      listHtml = `<p class="no-feedback">작성된 주관식 기타 의견이 없습니다.</p>`;
+    } else {
+      items.forEach(r => {
+        let content = "";
+        if (r.q7_etc) content += `<strong>[마음에 든 점 기타]</strong> ${r.q7_etc}\n`;
+        if (r.q8_etc) content += `<strong>[개선점 기타]</strong> ${r.q8_etc}`;
+        
+        listHtml += createFeedbackCard(r.name, r.submittedAt, content);
+      });
+    }
+  }
+
+  container.innerHTML = listHtml;
+}
+
+// 피드백 카드 HTML 템플릿 생성기
+function createFeedbackCard(name, dateStr, content) {
+  const formattedDate = new Date(dateStr).toLocaleString('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return `
+    <div class="feedback-card">
+      <div class="feedback-meta">
+        <span class="feedback-name">${name} 응답자</span>
+        <span class="feedback-date">${formattedDate}</span>
+      </div>
+      <div class="feedback-content">${content}</div>
+    </div>
+  `;
+}
+
+// 피드백 탭 전환
+function switchFeedbackTab(tabKey) {
+  currentFeedbackTab = tabKey;
+  
+  // 탭 버튼 active 클래스 갱신
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  tabBtns.forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  // 클릭한 버튼에 active 추가
+  event.target.classList.add("active");
+
+  renderFeedback();
+}
+
+// 4. SheetJS를 활용한 엑셀 파일 다운로드
+function downloadExcel() {
+  if (surveyResponses.length === 0) {
+    alert("다운로드할 데이터가 없습니다.");
+    return;
+  }
+
+  // 엑셀에 내보낼 데이터 맵핑 및 정제
+  const excelData = surveyResponses.map((r, index) => {
+    const formattedDate = new Date(r.submittedAt).toLocaleString('ko-KR');
+    return {
+      "번호": surveyResponses.length - index,
+      "성함": r.name || "",
+      "참여 교육 일자": r.eduDate || "",
+      "Q1. 전반적 만족도": r.q1 || 0,
+      "Q2. 콘텐츠 깊이/난이도": r.q2 || 0,
+      "Q3. 강사 전문성/소통": r.q3 || 0,
+      "Q4. 부가자료 도움": r.q4 || 0,
+      "Q5. 튜터 멘토링": r.q5 || 0,
+      "Q6. 동료 추천의향": r.q6 || 0,
+      "Q7. 마음에 든 항목": (r.q7 || []).join(", "),
+      "Q7. 마음에 든 항목 (기타)": r.q7_etc || "",
+      "Q8. 개선 필요 항목": (r.q8 || []).join(", "),
+      "Q8. 개선 필요 항목 (기타)": r.q8_etc || "",
+      "Q9. 교육 소감 및 피드백": r.q9 || "",
+      "Q10. 희망 교육 주제": r.q10 || "",
+      "제출 시간": formattedDate
+    };
+  });
+
+  // SheetJS 워크시트 생성
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  
+  // 컬럼 너비 자동 설정 (가독성 향상)
+  const colWidths = [
+    { wch: 6 },  // 번호
+    { wch: 10 }, // 성함
+    { wch: 18 }, // 참여 교육 일자
+    { wch: 18 }, // Q1
+    { wch: 22 }, // Q2
+    { wch: 22 }, // Q3
+    { wch: 18 }, // Q4
+    { wch: 18 }, // Q5
+    { wch: 18 }, // Q6
+    { wch: 30 }, // Q7
+    { wch: 30 }, // Q7 기타
+    { wch: 30 }, // Q8
+    { wch: 30 }, // Q8 기타
+    { wch: 45 }, // Q9 소감
+    { wch: 45 }, // Q10 주제
+    { wch: 22 }  // 제출 시간
+  ];
+  worksheet['!cols'] = colWidths;
+
+  // 워크북 생성 및 시트 추가
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "만족도 조사 결과");
+
+  // 엑셀 파일 쓰기 및 다운로드 트리거
+  XLSX.writeFile(workbook, "AXer_Incubator_Survey_Results.xlsx");
+}
+
+// 흔들림 애니메이션 CSS 추가
+const styleSheet = document.createElement("style");
+styleSheet.innerText = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+  .spin-animation {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(styleSheet);
