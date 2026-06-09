@@ -80,28 +80,28 @@
           
           <div class="options-grid radio-group">
             <label class="option-card">
-              <input type="radio" name="eduDate" value="26/06/09 (화)" required>
-              <span class="option-label">26/06/09 (화)</span>
+              <input type="radio" name="eduDate" value="6/11(목)" required>
+              <span class="option-label">6/11(목)</span>
             </label>
             <label class="option-card">
-              <input type="radio" name="eduDate" value="26/06/10 (수)">
-              <span class="option-label">26/06/10 (수)</span>
+              <input type="radio" name="eduDate" value="6/18(목)">
+              <span class="option-label">6/18(목)</span>
             </label>
             <label class="option-card">
-              <input type="radio" name="eduDate" value="26/06/16 (화)">
-              <span class="option-label">26/06/16 (화)</span>
+              <input type="radio" name="eduDate" value="6/25(목)">
+              <span class="option-label">6/25(목)</span>
             </label>
             <label class="option-card">
-              <input type="radio" name="eduDate" value="26/06/17 (수)">
-              <span class="option-label">26/06/17 (수)</span>
+              <input type="radio" name="eduDate" value="7/2(목)">
+              <span class="option-label">7/2(목)</span>
             </label>
             <label class="option-card">
-              <input type="radio" name="eduDate" value="26/07/14 (화)">
-              <span class="option-label">26/07/14 (화)</span>
+              <input type="radio" name="eduDate" value="7/9(목)">
+              <span class="option-label">7/9(목)</span>
             </label>
             <label class="option-card">
-              <input type="radio" name="eduDate" value="26/07/15 (수)">
-              <span class="option-label">26/07/15 (수)</span>
+              <input type="radio" name="eduDate" value="7/16(목)">
+              <span class="option-label">7/16(목)</span>
             </label>
           </div>
           
@@ -280,11 +280,11 @@
         </div>
       </div>
 
-      <!-- Question 7: Q5 튜터 멘토링 (Step 7) -->
+      <!-- Question 7: Q5 추천 의사 (Step 7) - (구 6번 문항, 튜터 삭제로 앞당겨짐) -->
       <div class="survey-card" data-step="7" data-required="true">
         <div class="card-inner">
           <span class="question-number">07</span>
-          <h2 class="question-title">5. 교육을 보조하는 튜터의 멘토링이 적극적이었으며, 교육 참여에 도움이 되었습니까? <span class="required-star">*</span></h2>
+          <h2 class="question-title">5. 본 교육 과정을 회사 동료에게 추천하고 싶으신가요? <span class="required-star">*</span></h2>
           
           <div class="scale-container">
             <div class="scale-labels">
@@ -322,38 +322,61 @@
         </div>
       </div>
 
-      <!-- Question 8: Q6 추천 의사 (Step 8) -->
+      <!-- Question 8: Q6 마음에 들었던 점 (Step 8) -->
       <div class="survey-card" data-step="8" data-required="true">
-        <div class="card-inner">
+        <div class="card-inner scrollable-card">
           <span class="question-number">08</span>
-          <h2 class="question-title">6. 본 교육 과정을 회사 동료에게 추천하고 싶으신가요? <span class="required-star">*</span></h2>
+          <h2 class="question-title">6. 이 교육에서 가장 마음에 들었던 점은 무엇입니까? <span class="required-star">*</span> <span class="multiple-choice-badge">(복수 선택 가능)</span></h2>
           
-          <div class="scale-container">
-            <div class="scale-labels">
-              <span>전혀 그렇지 않다</span>
-              <span>매우 그렇다</span>
-            </div>
-            <div class="scale-group">
-              <label class="scale-item">
-                <input type="radio" name="q6" value="1" required>
-                <span class="scale-num">1</span>
+          <div class="options-list checkbox-group">
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="강사의 강의 속도">
+              <span class="option-checkbox"></span>
+              <span class="option-label">강사의 강의 속도</span>
+            </label>
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="강사의 전달력 및 커뮤니케이션">
+              <span class="option-checkbox"></span>
+              <span class="option-label">강사의 전달력 및 커뮤니케이션</span>
+            </label>
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="교육 자료 및 콘텐츠의 품질">
+              <span class="option-checkbox"></span>
+              <span class="option-label">교육 자료 및 콘텐츠의 품질</span>
+            </label>
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="실무 적용 가능성">
+              <span class="option-checkbox"></span>
+              <span class="option-label">실무 적용 가능성</span>
+            </label>
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="실습 위주의 학습 방식">
+              <span class="option-checkbox"></span>
+              <span class="option-label">실습 위주의 학습 방식</span>
+            </label>
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="개인 맞춤 피드백 제공">
+              <span class="option-checkbox"></span>
+              <span class="option-label">개인 맞춤 피드백 제공</span>
+            </label>
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="교육 일정 및 진행 시간">
+              <span class="option-checkbox"></span>
+              <span class="option-label">교육 일정 및 진행 시간</span>
+            </label>
+            <label class="option-card">
+              <input type="checkbox" name="q6" value="없음">
+              <span class="option-checkbox"></span>
+              <span class="option-label">없음</span>
+            </label>
+            
+            <div class="etc-wrapper">
+              <label class="option-card option-etc-card">
+                <input type="checkbox" name="q6" value="기타" id="q6EtcCheck">
+                <span class="option-checkbox"></span>
+                <span class="option-label">기타:</span>
               </label>
-              <label class="scale-item">
-                <input type="radio" name="q6" value="2">
-                <span class="scale-num">2</span>
-              </label>
-              <label class="scale-item">
-                <input type="radio" name="q6" value="3">
-                <span class="scale-num">3</span>
-              </label>
-              <label class="scale-item">
-                <input type="radio" name="q6" value="4">
-                <span class="scale-num">4</span>
-              </label>
-              <label class="scale-item">
-                <input type="radio" name="q6" value="5">
-                <span class="scale-num">5</span>
-              </label>
+              <input type="text" id="inputQ6Etc" class="etc-input" placeholder="여기에 입력하세요..." disabled>
             </div>
           </div>
 
@@ -364,13 +387,18 @@
         </div>
       </div>
 
-      <!-- Question 9: Q7 마음에 들었던 점 (Step 9) -->
+      <!-- Question 9: Q7 개선점 (Step 9) -->
       <div class="survey-card" data-step="9" data-required="true">
         <div class="card-inner scrollable-card">
           <span class="question-number">09</span>
-          <h2 class="question-title">7. 이 교육에서 가장 마음에 들었던 점은 무엇입니까? <span class="required-star">*</span> <span class="multiple-choice-badge">(복수 선택 가능)</span></h2>
+          <h2 class="question-title">7. 이 교육에서 개선되었으면 하는 부분이 있다면 무엇입니까? <span class="required-star">*</span> <span class="multiple-choice-badge">(복수 선택 가능)</span></h2>
           
           <div class="options-list checkbox-group">
+            <label class="option-card">
+              <input type="checkbox" name="q7" value="없음">
+              <span class="option-checkbox"></span>
+              <span class="option-label">없음</span>
+            </label>
             <label class="option-card">
               <input type="checkbox" name="q7" value="강사의 강의 속도">
               <span class="option-checkbox"></span>
@@ -382,9 +410,9 @@
               <span class="option-label">강사의 전달력 및 커뮤니케이션</span>
             </label>
             <label class="option-card">
-              <input type="checkbox" name="q7" value="교육 자료 및 콘텐츠의 품질">
+              <input type="checkbox" name="q7" value="교육 자료 및 콘텐츠의 난이도">
               <span class="option-checkbox"></span>
-              <span class="option-label">교육 자료 및 콘텐츠의 품질</span>
+              <span class="option-label">교육 자료 및 콘텐츠의 난이도</span>
             </label>
             <label class="option-card">
               <input type="checkbox" name="q7" value="실무 적용 가능성">
@@ -397,19 +425,14 @@
               <span class="option-label">실습 위주의 학습 방식</span>
             </label>
             <label class="option-card">
-              <input type="checkbox" name="q7" value="개인 맞춤 피드백 제공">
+              <input type="checkbox" name="q7" value="개인 맞춤 피드백 부족">
               <span class="option-checkbox"></span>
-              <span class="option-label">개인 맞춤 피드백 제공</span>
+              <span class="option-label">개인 맞춤 피드백 부족</span>
             </label>
             <label class="option-card">
               <input type="checkbox" name="q7" value="교육 일정 및 진행 시간">
               <span class="option-checkbox"></span>
               <span class="option-label">교육 일정 및 진행 시간</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q7" value="없음">
-              <span class="option-checkbox"></span>
-              <span class="option-label">없음</span>
             </label>
             
             <div class="etc-wrapper">
@@ -429,79 +452,14 @@
         </div>
       </div>
 
-      <!-- Question 10: Q8 개선점 (Step 10) -->
-      <div class="survey-card" data-step="10" data-required="true">
-        <div class="card-inner scrollable-card">
-          <span class="question-number">10</span>
-          <h2 class="question-title">8. 이 교육에서 개선되었으면 하는 부분이 있다면 무엇입니까? <span class="required-star">*</span> <span class="multiple-choice-badge">(복수 선택 가능)</span></h2>
-          
-          <div class="options-list checkbox-group">
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="없음">
-              <span class="option-checkbox"></span>
-              <span class="option-label">없음</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="강사의 강의 속도">
-              <span class="option-checkbox"></span>
-              <span class="option-label">강사의 강의 속도</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="강사의 전달력 및 커뮤니케이션">
-              <span class="option-checkbox"></span>
-              <span class="option-label">강사의 전달력 및 커뮤니케이션</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="교육 자료 및 콘텐츠의 난이도">
-              <span class="option-checkbox"></span>
-              <span class="option-label">교육 자료 및 콘텐츠의 난이도</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="실무 적용 가능성">
-              <span class="option-checkbox"></span>
-              <span class="option-label">실무 적용 가능성</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="실습 위주의 학습 방식">
-              <span class="option-checkbox"></span>
-              <span class="option-label">실습 위주의 학습 방식</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="개인 맞춤 피드백 부족">
-              <span class="option-checkbox"></span>
-              <span class="option-label">개인 맞춤 피드백 부족</span>
-            </label>
-            <label class="option-card">
-              <input type="checkbox" name="q8" value="교육 일정 및 진행 시간">
-              <span class="option-checkbox"></span>
-              <span class="option-label">교육 일정 및 진행 시간</span>
-            </label>
-            
-            <div class="etc-wrapper">
-              <label class="option-card option-etc-card">
-                <input type="checkbox" name="q8" value="기타" id="q8EtcCheck">
-                <span class="option-checkbox"></span>
-                <span class="option-label">기타:</span>
-              </label>
-              <input type="text" id="inputQ8Etc" class="etc-input" placeholder="여기에 입력하세요..." disabled>
-            </div>
-          </div>
-
-          <div class="btn-group">
-            <button class="btn btn-secondary" onclick="prevStep()"><i data-lucide="arrow-left"></i> 이전</button>
-            <button class="btn btn-primary" onclick="validateAndNext(10)">다음 <i data-lucide="arrow-right"></i></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Question 11: Q9 자유 소감 (Step 11) -->
-      <div class="survey-card" data-step="11">
+      <!-- Question 10: Q8 현업 활용 요소 (Step 10) - (신규 문항) -->
+      <div class="survey-card" data-step="10">
         <div class="card-inner">
-          <span class="question-number">11</span>
-          <h2 class="question-title">9. 교육 소감 및 교육 관련 피드백이 있다면 자유롭게 적어 주세요. <span class="optional-badge">(선택)</span></h2>
+          <span class="question-number">10</span>
+          <h2 class="question-title">8. 현업에서 교육 받은 내용을 잘 활용하기 위해서는 어떤 게 필요하다고 생각하는지 자유롭게 적어 주세요. <span class="optional-badge">(선택)</span></h2>
           
           <div class="input-wrapper textarea-wrapper">
-            <textarea id="inputQ9" name="q9" class="tech-textarea" placeholder="소감을 자유롭게 입력해주세요..." rows="4"></textarea>
+            <textarea id="inputQ8" name="q8" class="tech-textarea" placeholder="현업 적용을 위해 필요한 인프라, 지원, 추가 교육 등에 대한 생각을 작성해주세요..." rows="4"></textarea>
             <div class="focus-line"></div>
           </div>
 
@@ -512,14 +470,14 @@
         </div>
       </div>
 
-      <!-- Question 12: Q10 희망 교육 주제 (Step 12) -->
-      <div class="survey-card" data-step="12">
+      <!-- Question 11: Q9 자유 소감 (Step 11) - (소감 문항이 가장 마지막으로 이동함) -->
+      <div class="survey-card" data-step="11">
         <div class="card-inner">
-          <span class="question-number">12</span>
-          <h2 class="question-title">10. 추후 희망하시는 교육 주제가 있다면 자유롭게 적어 주세요. <span class="optional-badge">(선택)</span></h2>
+          <span class="question-number">11</span>
+          <h2 class="question-title">9. 교육 소감 및 교육 관련 피드백이 있다면 자유롭게 적어 주세요. <span class="optional-badge">(선택)</span></h2>
           
           <div class="input-wrapper textarea-wrapper">
-            <textarea id="inputQ10" name="q10" class="tech-textarea" placeholder="희망하는 주제를 작성해주세요..." rows="4"></textarea>
+            <textarea id="inputQ9" name="q9" class="tech-textarea" placeholder="소감을 자유롭게 입력해주세요..." rows="4"></textarea>
             <div class="focus-line"></div>
           </div>
 
@@ -533,8 +491,8 @@
         </div>
       </div>
 
-      <!-- Completion Screen (Step 13) -->
-      <div class="survey-card" data-step="13">
+      <!-- Completion Screen (Step 12) -->
+      <div class="survey-card" data-step="12">
         <div class="card-inner">
           <div class="success-icon-wrapper">
             <i data-lucide="check-circle" class="success-icon"></i>
@@ -561,7 +519,7 @@
     </div>
   </footer>
 
-  <!-- Firebase Web SDK v8 (v8은 별도의 번들러 없이 CDN으로 쓰기 가장 안정적임) -->
+  <!-- Firebase Web SDK v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   

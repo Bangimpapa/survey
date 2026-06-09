@@ -62,7 +62,7 @@ class DatabaseService {
     this.collectionName = "survey_responses";
   }
 
-  // 설문 응답 제출
+  // 설문 응답 제출 (5초 타임아웃 적용으로 무한 대기 버그 방지)
   async submitResponse(data) {
     const responseData = {
       ...data,
@@ -70,7 +70,13 @@ class DatabaseService {
     };
 
     if (this.type === 'firebase' && this.db) {
-      return this.db.collection(this.collectionName).add(responseData);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("연결 시간 초과. Firebase Database 및 보안 규칙 설정을 확인해 주세요.")), 5000)
+      );
+      
+      const submitPromise = this.db.collection(this.collectionName).add(responseData);
+      
+      return Promise.race([submitPromise, timeoutPromise]);
     } else {
       // LocalStorage 모드
       let responses = this.getLocalResponses();
@@ -113,7 +119,7 @@ class DatabaseService {
   getLocalResponses() {
     const data = localStorage.getItem(this.collectionName);
     if (!data) {
-      // 테스트를 위한 더미 데이터 5개 자동 생성 (로컬스토리지 모드일 때 시각화와 엑셀 확인용)
+      // 테스트를 위한 더미 데이터 28개 자동 생성 (로컬스토리지 모드일 때 시각화와 엑셀 확인용)
       const dummyData = this.generateDummyData();
       localStorage.setItem(this.collectionName, JSON.stringify(dummyData));
       return dummyData;
@@ -125,8 +131,8 @@ class DatabaseService {
   generateDummyData() {
     const names = ["김민수", "이서연", "박준혁", "최지우", "정현우", "한소희", "윤도현"];
     const dates = [
-      "26/06/09 (화)", "26/06/10 (수)", "26/06/16 (화)", 
-      "26/06/17 (수)", "26/07/14 (화)", "26/07/15 (수)"
+      "6/11(목)", "6/18(목)", "6/25(목)", 
+      "7/2(목)", "7/9(목)", "7/16(목)"
     ];
     
     const likedFeatures = [
@@ -142,20 +148,20 @@ class DatabaseService {
     const dummies = [];
     
     for (let i = 0; i < 28; i++) {
-      const q7Count = Math.floor(Math.random() * 3) + 1;
-      const q8Count = Math.floor(Math.random() * 2);
+      const q6Count = Math.floor(Math.random() * 3) + 1;
+      const q7Count = Math.floor(Math.random() * 2);
       
       const selectedLiked = [];
-      while(selectedLiked.length < q7Count) {
+      while(selectedLiked.length < q6Count) {
         const item = likedFeatures[Math.floor(Math.random() * likedFeatures.length)];
         if(!selectedLiked.includes(item)) selectedLiked.push(item);
       }
       
       const selectedImproved = [];
-      if (q8Count === 0) {
+      if (q7Count === 0) {
         selectedImproved.push("없음");
       } else {
-        while(selectedImproved.length < q8Count) {
+        while(selectedImproved.length < q7Count) {
           const item = improvedFeatures[Math.floor(Math.random() * improvedFeatures.length)];
           if(!selectedImproved.includes(item) && item !== "없음") selectedImproved.push(item);
         }
@@ -169,14 +175,13 @@ class DatabaseService {
         q2: Math.floor(Math.random() * 3) + 3, // 3, 4, 5
         q3: Math.floor(Math.random() * 2) + 4, // 4 or 5
         q4: Math.floor(Math.random() * 3) + 3, // 3, 4, 5
-        q5: Math.floor(Math.random() * 2) + 4, // 4 or 5
-        q6: Math.floor(Math.random() * 2) + 4, // 4 or 5
-        q7: selectedLiked,
-        q7_etc: Math.random() > 0.8 ? "트렌디한 실습 구성이 좋았습니다." : "",
-        q8: selectedImproved,
-        q8_etc: Math.random() > 0.9 ? "쉬는 시간이 약간 더 길었으면 좋겠습니다." : "",
-        q9: Math.random() > 0.5 ? "인큐베이터 기획 교육이 실무에 매우 큰 도움이 되었습니다. 강사님의 전문적인 피드백 감사드립니다." : "",
-        q10: Math.random() > 0.6 ? "AI 트렌드 기술을 반영한 서비스 기획" : "",
+        q5: Math.floor(Math.random() * 2) + 4, // 4 or 5 (추천의향)
+        q6: selectedLiked,
+        q6_etc: Math.random() > 0.8 ? "트렌디한 실습 구성이 좋았습니다." : "",
+        q7: selectedImproved,
+        q7_etc: Math.random() > 0.9 ? "쉬는 시간이 약간 더 길었으면 좋겠습니다." : "",
+        q8: Math.random() > 0.5 ? "실무 기획안 작성 시 템플릿과 방법론을 적용해 보겠습니다." : "",
+        q9: Math.random() > 0.6 ? "인큐베이터 기획 교육이 실무에 매우 큰 도움이 되었습니다. 강사님의 전문적인 피드백 감사드립니다." : "",
         submittedAt: new Date(Date.now() - (30 - i) * 6 * 3600 * 1000).toISOString() // 시간 간격 생성
       });
     }

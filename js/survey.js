@@ -3,7 +3,7 @@
  */
 
 let currentStep = 0;
-const totalSteps = 12; // 웰컴 화면(0)과 제출 완료 화면(13)을 제외한 질문 수 (1 ~ 12)
+const totalSteps = 11; // 웰컴 화면(0)과 제출 완료 화면(12)을 제외한 질문 수 (1 ~ 11)
 
 document.addEventListener("DOMContentLoaded", () => {
   // Lucide 아이콘 초기화
@@ -52,7 +52,40 @@ function setupEventListeners() {
     }
   });
 
-  // 2. 7번(Q7) 기타 체크박스 활성화 감지
+  // 2. 6번(Q6) 기타 체크박스 활성화 감지
+  const q6Checkboxes = document.querySelectorAll('input[name="q6"]');
+  const q6EtcCheck = document.getElementById("q6EtcCheck");
+  const inputQ6Etc = document.getElementById("inputQ6Etc");
+  
+  q6Checkboxes.forEach(cb => {
+    cb.addEventListener("change", () => {
+      // '없음' 선택 시 다른 모든 체크박스 해제
+      if (cb.value === "없음" && cb.checked) {
+        q6Checkboxes.forEach(other => {
+          if (other.value !== "없음") {
+            other.checked = false;
+          }
+        });
+        inputQ6Etc.disabled = true;
+        inputQ6Etc.value = "";
+      } else if (cb.value !== "없음" && cb.checked) {
+        // 다른 항목 선택 시 '없음' 체크 해제
+        const noneCb = Array.from(q6Checkboxes).find(other => other.value === "없음");
+        if (noneCb) noneCb.checked = false;
+      }
+      
+      if (q6EtcCheck) {
+        inputQ6Etc.disabled = !q6EtcCheck.checked;
+        if (q6EtcCheck.checked) {
+          inputQ6Etc.focus();
+        } else {
+          inputQ6Etc.value = "";
+        }
+      }
+    });
+  });
+
+  // 3. 7번(Q7) 기타 체크박스 활성화 감지
   const q7Checkboxes = document.querySelectorAll('input[name="q7"]');
   const q7EtcCheck = document.getElementById("q7EtcCheck");
   const inputQ7Etc = document.getElementById("inputQ7Etc");
@@ -85,39 +118,6 @@ function setupEventListeners() {
     });
   });
 
-  // 3. 8번(Q8) 기타 체크박스 활성화 감지
-  const q8Checkboxes = document.querySelectorAll('input[name="q8"]');
-  const q8EtcCheck = document.getElementById("q8EtcCheck");
-  const inputQ8Etc = document.getElementById("inputQ8Etc");
-  
-  q8Checkboxes.forEach(cb => {
-    cb.addEventListener("change", () => {
-      // '없음' 선택 시 다른 모든 체크박스 해제
-      if (cb.value === "없음" && cb.checked) {
-        q8Checkboxes.forEach(other => {
-          if (other.value !== "없음") {
-            other.checked = false;
-          }
-        });
-        inputQ8Etc.disabled = true;
-        inputQ8Etc.value = "";
-      } else if (cb.value !== "없음" && cb.checked) {
-        // 다른 항목 선택 시 '없음' 체크 해제
-        const noneCb = Array.from(q8Checkboxes).find(other => other.value === "없음");
-        if (noneCb) noneCb.checked = false;
-      }
-      
-      if (q8EtcCheck) {
-        inputQ8Etc.disabled = !q8EtcCheck.checked;
-        if (q8EtcCheck.checked) {
-          inputQ8Etc.focus();
-        } else {
-          inputQ8Etc.value = "";
-        }
-      }
-    });
-  });
-
   // 4. 라디오 버튼 선택 시 0.4초 후 자동으로 다음 스텝 이동 (더 빠른 작성 경험 제공)
   const autoNextRadios = document.querySelectorAll('.scale-item input, .options-grid input[type="radio"]');
   autoNextRadios.forEach(radio => {
@@ -129,7 +129,7 @@ function setupEventListeners() {
         if (stepNum === currentStep) {
           validateAndNext(stepNum);
         }
-      }, 350); // 사용자가 선택한 것을 시각적으로 확인하고 넘어갈 수 있도록 미세 딜레이 부여
+      }, 350);
     });
   });
 }
@@ -220,14 +220,14 @@ function validateAndNext(step) {
     const checked = card.querySelector('input[name="eduDate"]:checked');
     isValid = checked !== null;
   }
-  else if (step >= 3 && step <= 8) {
+  else if (step >= 3 && step <= 7) {
     const qNum = `q${step - 2}`;
     const checked = card.querySelector(`input[name="${qNum}"]:checked`);
     isValid = checked !== null;
   }
-  // 3. 복수선택 체크박스 검증 (7번, 8번 질문)
-  else if (step === 9 || step === 10) {
-    const qNum = step === 9 ? "q7" : "q8";
+  // 3. 복수선택 체크박스 검증 (6번, 7번 질문)
+  else if (step === 8 || step === 9) {
+    const qNum = step === 8 ? "q6" : "q7";
     const checkedBoxes = card.querySelectorAll(`input[name="${qNum}"]:checked`);
     
     // 최소 1개 이상 선택
@@ -269,11 +269,11 @@ async function submitSurvey() {
     const data = parseFormData();
     await window.dbService.submitResponse(data);
     
-    // 제출 성공 시 다음 스텝(제출 완료 화면)으로 이동
-    transitionCard(currentStep, 13);
+    // 제출 성공 시 다음 스텝(제출 완료 화면 - 12번)으로 이동
+    transitionCard(currentStep, 12);
   } catch (error) {
     console.error("설문 제출에 실패했습니다:", error);
-    alert("제출에 실패했습니다. 네트워크 상태를 확인하시거나 다시 시도해 주세요.");
+    alert(error.message || "제출에 실패했습니다. 네트워크 상태 및 파이어베이스 설정을 확인하시고 다시 시도해 주세요.");
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalHtml;
   }
@@ -289,31 +289,30 @@ function parseFormData() {
   const q3 = parseInt(document.querySelector('input[name="q3"]:checked').value);
   const q4 = parseInt(document.querySelector('input[name="q4"]:checked').value);
   const q5 = parseInt(document.querySelector('input[name="q5"]:checked').value);
-  const q6 = parseInt(document.querySelector('input[name="q6"]:checked').value);
   
-  // 7번 질문 마음에 들었던 점 파싱
+  // 6번 질문 마음에 들었던 점 파싱
+  const q6Checked = document.querySelectorAll('input[name="q6"]:checked');
+  const q6 = Array.from(q6Checked).map(cb => cb.value).filter(val => val !== "기타");
+  const q6_etc = document.getElementById("inputQ6Etc").value.trim();
+  
+  // 7번 질문 개선점 파싱
   const q7Checked = document.querySelectorAll('input[name="q7"]:checked');
   const q7 = Array.from(q7Checked).map(cb => cb.value).filter(val => val !== "기타");
   const q7_etc = document.getElementById("inputQ7Etc").value.trim();
   
-  // 8번 질문 개선점 파싱
-  const q8Checked = document.querySelectorAll('input[name="q8"]:checked');
-  const q8 = Array.from(q8Checked).map(cb => cb.value).filter(val => val !== "기타");
-  const q8_etc = document.getElementById("inputQ8Etc").value.trim();
-  
+  const q8 = document.getElementById("inputQ8").value.trim();
   const q9 = document.getElementById("inputQ9").value.trim();
-  const q10 = document.getElementById("inputQ10").value.trim();
 
   return {
     name,
     eduDate,
-    q1, q2, q3, q4, q5, q6,
+    q1, q2, q3, q4, q5,
+    q6,
+    q6_etc,
     q7,
     q7_etc,
     q8,
-    q8_etc,
-    q9,
-    q10
+    q9
   };
 }
 
