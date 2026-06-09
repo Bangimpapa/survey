@@ -647,4 +647,42 @@
   }
 }
 
+/* --- 주관식 답변 테이블 레이아웃 보완 --- */
+.table-actions-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 주관식 컬럼이 늘어남에 따라 최소 너비 확장 */
+.survey-table {
+  min-width: 1400px;
+}
+
+/* 주관식 답변 열 기본 말줄임 상태 */
+.subjective-col {
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+}
+
+.subjective-col:hover {
+  color: var(--text-primary);
+}
+
+/* 전체 보기 활성화 시 (expanded-mode) */
+.survey-table.expanded-mode .subjective-col {
+  max-width: 280px;
+  white-space: normal; /* 여러 줄 줄바꿈 허용 */
+  word-break: break-all; /* 영문/단어 잘림 개행 */
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-size: 0.85rem;
+}
+
+
 

@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>[관리자] AXer Incubator 만족도 조사 대시보</title>
+  <title>[관리자] AXer Incubator 만족도 조사 대시보드</title>
   
   <meta name="description" content="롯데백화점 AXer Incubator 만족도 조사 결과 관리 및 분석 대시보드입니다.">
   <meta name="theme-color" content="#0a0b0d">
   
-  <!-- Stylesheets -->
+  <!-- stylesheets -->
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" href="css/admin.css">
   
@@ -60,7 +60,7 @@
       </div>
     </header>
 
-    <!-- 대화형 대형 네비게이션 탭 추가 -->
+    <!-- 대화형 대형 네비게이션 탭 -->
     <div class="admin-nav-tabs">
       <button class="nav-tab-btn active" id="navTabDashboard" onclick="switchNavTab('dashboard')">
         <i data-lucide="bar-chart-3"></i> 대시보드 분석
@@ -154,14 +154,19 @@
       </section>
     </div>
 
-    <!-- 탭 콘텐츠 2: 응답 세부내역 표 (Table) -->
+    <!-- 탭 콘텐츠 2: 응답 세부내역 표 (Table, 주관식 컬럼 추가) -->
     <div id="tabContentTable" class="tab-content" style="display: none;">
       <section class="table-section glass">
         <div class="table-header-row">
           <h3 class="table-title"><i data-lucide="table"></i> 설문 응답 데이터 원본 표</h3>
-          <button class="btn btn-secondary btn-delete-selected" id="btnDeleteSelected" onclick="openBatchDeleteModal()" disabled>
-            <i data-lucide="trash-2"></i> 선택 삭제 (<span id="selectedCount">0</span>)
-          </button>
+          <div class="table-actions-group">
+            <button class="btn btn-secondary" id="btnToggleSubjective" onclick="toggleSubjectiveView()">
+              <i data-lucide="maximize-2"></i> 주관식 전체 보기
+            </button>
+            <button class="btn btn-secondary btn-delete-selected" id="btnDeleteSelected" onclick="openBatchDeleteModal()" disabled>
+              <i data-lucide="trash-2"></i> 선택 삭제 (<span id="selectedCount">0</span>)
+            </button>
+          </div>
         </div>
         
         <div class="table-responsive">
@@ -176,8 +181,13 @@
                 <th class="sortable-header" onclick="handleSort('q3')">Q3 <span class="sort-icon" id="sort-q3"></span></th>
                 <th class="sortable-header" onclick="handleSort('q4')">Q4 <span class="sort-icon" id="sort-q4"></span></th>
                 <th class="sortable-header" onclick="handleSort('q5')">Q5 <span class="sort-icon" id="sort-q5"></span></th>
+                <!-- 주관식 컬럼 추가 -->
+                <th class="sortable-header" onclick="handleSort('q6_etc')">Q6기타 <span class="sort-icon" id="sort-q6_etc"></span></th>
+                <th class="sortable-header" onclick="handleSort('q7_etc')">Q7기타 <span class="sort-icon" id="sort-q7_etc"></span></th>
+                <th class="sortable-header" onclick="handleSort('q8')">Q8현업활용 <span class="sort-icon" id="sort-q8"></span></th>
+                <th class="sortable-header" onclick="handleSort('q9')">Q9교육소감 <span class="sort-icon" id="sort-q9"></span></th>
                 <th class="sortable-header" onclick="handleSort('submittedAt')">제출 시간 <span class="sort-icon" id="sort-submittedAt"></span></th>
-                <th width="80">관리</th>
+                <th width="60">관리</th>
               </tr>
             </thead>
             <tbody id="tableBody">
