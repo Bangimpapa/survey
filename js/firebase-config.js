@@ -182,7 +182,7 @@ class DatabaseService {
         q7_etc: Math.random() > 0.9 ? "쉬는 시간이 약간 더 길었으면 좋겠습니다." : "",
         q8: Math.random() > 0.5 ? "실무 기획안 작성 시 템플릿과 방법론을 적용해 보겠습니다." : "",
         q9: Math.random() > 0.6 ? "인큐베이터 기획 교육이 실무에 매우 큰 도움이 되었습니다. 강사님의 전문적인 피드백 감사드립니다." : "",
-        submittedAt: new Date(Date.now() - (30 - i) * 6 * 3600 * 1000).toISOString() // 시간 간격 생성
+        submittedAt: new Date(Date.now() - (30 - i) * 6 * 3600 * 1000).toISOString()
       });
     }
     return dummies;
