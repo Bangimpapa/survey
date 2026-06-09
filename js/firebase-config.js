@@ -187,6 +187,35 @@ class DatabaseService {
     }
     return dummies;
   }
+
+  // 개별 설문 응답 삭제
+  async deleteResponse(id) {
+    if (this.type === 'firebase' && this.db) {
+      return this.db.collection(this.collectionName).doc(id).delete();
+    } else {
+      let responses = this.getLocalResponses();
+      responses = responses.filter(r => r.id !== id);
+      localStorage.setItem(this.collectionName, JSON.stringify(responses));
+      return true;
+    }
+  }
+
+  // 다중 설문 응답 선택 삭제 (Batch 일괄 처리)
+  async deleteResponses(ids) {
+    if (this.type === 'firebase' && this.db) {
+      const batch = this.db.batch();
+      ids.forEach(id => {
+        const docRef = this.db.collection(this.collectionName).doc(id);
+        batch.delete(docRef);
+      });
+      return batch.commit();
+    } else {
+      let responses = this.getLocalResponses();
+      responses = responses.filter(r => !ids.includes(r.id));
+      localStorage.setItem(this.collectionName, JSON.stringify(responses));
+      return true;
+    }
+  }
 }
 
 // 글로벌 인스턴스 노출

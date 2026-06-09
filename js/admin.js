@@ -1,10 +1,17 @@
 /**
- * Admin Dashboard Logic (Authentication, Chart.js Visualizations, Excel Export)
+ * Admin Dashboard Logic (Authentication, Chart.js Visualizations, Excel Export, Data Table, Sorting, Deleting)
  */
 
 let surveyResponses = [];
-let currentFeedbackTab = 'q8'; // 8번 문항으로 기본 탭 설정 변경
+let currentFeedbackTab = 'q8'; // 8번 문항으로 기본 탭 설정
 let adminPassword = '';
+
+// 정렬 및 선택 상태 관리 전역 변수
+let sortColumn = 'submittedAt';
+let sortOrder = 'none'; // 'none' | 'asc' | 'desc'
+let selectedResponseIds = [];
+let activeDeleteId = null;  // 개별 삭제 대상 ID
+let activeDeleteIds = [];  // 일괄 삭제 대상 ID 배열
 
 // Chart.js 인스턴스 참조 보관용 객체
 const charts = {
@@ -97,6 +104,9 @@ async function loadDashboardData() {
   try {
     const responses = await window.dbService.getResponses(adminPassword);
     surveyResponses = responses;
+    selectedResponseIds = []; // 선택 상태 초기화
+    document.getElementById("selectAllCheckbox").checked = false;
+    updateDeleteSelectedButton();
     renderDashboard();
   } catch (error) {
     console.error("새로고침 실패:", error);
@@ -113,6 +123,7 @@ function renderDashboard() {
   renderMetrics();
   renderCharts();
   renderFeedback();
+  renderTable(); // 데이터 표 렌더링 추가
 }
 
 // 1. 핵심 스코어 카드 갱신
@@ -127,7 +138,7 @@ function renderMetrics() {
     return;
   }
 
-  // 만족도(q1), 추천(q5), 강사전문성(q3) 평균 계산 (튜터 삭제 반영)
+  // 만족도(q1), 추천(q5), 강사전문성(q3) 평균 계산
   const sumQ1 = surveyResponses.reduce((acc, curr) => acc + (curr.q1 || 0), 0);
   const sumQ5 = surveyResponses.reduce((acc, curr) => acc + (curr.q5 || 0), 0);
   const sumQ3 = surveyResponses.reduce((acc, curr) => acc + (curr.q3 || 0), 0);
@@ -164,14 +175,14 @@ function renderCharts() {
   Chart.defaults.color = textColor;
   Chart.defaults.font.family = 'Inter, -apple-system, sans-serif';
 
-  // --- 차트 1: 핵심 평가 지표 평균 (가로형 막대 차트, 튜터 제거 반영) ---
+  // --- 차트 1: 핵심 평가 지표 평균 (가로형 막대 차트) ---
   const indicatorSums = [0, 0, 0, 0, 0];
   surveyResponses.forEach(r => {
     indicatorSums[0] += r.q1 || 0;
     indicatorSums[1] += r.q2 || 0;
     indicatorSums[2] += r.q3 || 0;
     indicatorSums[3] += r.q4 || 0;
-    indicatorSums[4] += r.q5 || 0; // 동료 추천의향
+    indicatorSums[4] += r.q5 || 0;
   });
   
   const indicatorAvgs = indicatorSums.map(sum => (sum / count).toFixed(2));
@@ -334,7 +345,7 @@ function renderCharts() {
   });
 }
 
-// 3. 주관식 피드백 리스트 출력 (q8, q9 구조화)
+// 3. 주관식 피드백 리스트 출력
 function renderFeedback() {
   const container = document.getElementById("feedbackList");
   container.innerHTML = "";
@@ -418,7 +429,217 @@ function switchFeedbackTab(tabKey) {
   renderFeedback();
 }
 
-// 4. SheetJS를 활용한 엑셀 파일 다운로드 (컬럼명 재맵핑 완료)
+// 4. 데이터 표(Table) 렌더링 및 3단계 정렬 기능
+function renderTable() {
+  const tableBody = document.getElementById("tableBody");
+  tableBody.innerHTML = "";
+
+  const count = surveyResponses.length;
+  if (count === 0) {
+    tableBody.innerHTML = `<tr><td colspan="10" class="no-feedback" style="text-align:center;">설문 데이터가 존재하지 않습니다.</td></tr>`;
+    return;
+  }
+
+  // 1. 정렬 기준에 맞춰 데이터 복사 및 정렬
+  let displayData = [...surveyResponses];
+
+  if (sortOrder !== 'none') {
+    displayData.sort((a, b) => {
+      let valA = a[sortColumn];
+      let valB = b[sortColumn];
+
+      // Undefined 방어 처리
+      if (valA === undefined || valA === null) valA = '';
+      if (valB === undefined || valB === null) valB = '';
+
+      // 타입별 비교 분기
+      let comparison = 0;
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        comparison = valA - valB;
+      } else if (sortColumn === 'submittedAt') {
+        comparison = new Date(valA) - new Date(valB);
+      } else {
+        // 문자열 및 기타 비교 (localeCompare 적용)
+        comparison = String(valA).localeCompare(String(valB), 'ko-KR');
+      }
+
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+  }
+
+  // 2. 정렬 아이콘 헤더 업데이트
+  const headers = ['name', 'eduDate', 'q1', 'q2', 'q3', 'q4', 'q5', 'submittedAt'];
+  headers.forEach(header => {
+    const iconSpan = document.getElementById(`sort-${header}`);
+    if (iconSpan) {
+      if (sortColumn === header) {
+        if (sortOrder === 'asc') iconSpan.innerHTML = ' ▲';
+        else if (sortOrder === 'desc') iconSpan.innerHTML = ' ▼';
+        else iconSpan.innerHTML = '';
+      } else {
+        iconSpan.innerHTML = '';
+      }
+    }
+  });
+
+  // 3. 테이블 행 생성
+  displayData.forEach(r => {
+    const dateStr = new Date(r.submittedAt).toLocaleDateString('ko-KR', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    const isChecked = selectedResponseIds.includes(r.id);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="checkbox" class="row-checkbox" data-id="${r.id}" ${isChecked ? 'checked' : ''} onchange="handleRowCheckboxChange('${r.id}', this.checked)"></td>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.eduDate}</td>
+      <td>${r.q1}</td>
+      <td>${r.q2}</td>
+      <td>${r.q3}</td>
+      <td>${r.q4}</td>
+      <td>${r.q5}</td>
+      <td><span class="feedback-date">${dateStr}</span></td>
+      <td>
+        <button class="btn-row-delete" onclick="openDeleteModal('${r.id}')" title="삭제">
+          <i data-lucide="trash-2"></i>
+        </button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+
+  // Lucide 아이콘 다시 렌더링
+  lucide.createIcons();
+}
+
+// 컬럼 헤더 클릭 시 정렬 핸들링 (none -> asc -> desc -> none 순환)
+function handleSort(column) {
+  if (sortColumn === column) {
+    if (sortOrder === 'none') sortOrder = 'asc';
+    else if (sortOrder === 'asc') sortOrder = 'desc';
+    else sortOrder = 'none';
+  } else {
+    sortColumn = column;
+    sortOrder = 'asc';
+  }
+  renderTable();
+}
+
+// 체크박스 전체 선택 / 해제
+function toggleSelectAll(masterCb) {
+  const rowCheckboxes = document.querySelectorAll(".row-checkbox");
+  const isChecked = masterCb.checked;
+  
+  selectedResponseIds = [];
+  rowCheckboxes.forEach(cb => {
+    cb.checked = isChecked;
+    if (isChecked) {
+      const id = cb.getAttribute("data-id");
+      selectedResponseIds.push(id);
+    }
+  });
+  updateDeleteSelectedButton();
+}
+
+// 개별 행 체크박스 감지
+function handleRowCheckboxChange(id, isChecked) {
+  if (isChecked) {
+    if (!selectedResponseIds.includes(id)) {
+      selectedResponseIds.push(id);
+    }
+  } else {
+    selectedResponseIds = selectedResponseIds.filter(item => item !== id);
+  }
+
+  // 전체 선택 체크박스 상태 동기화
+  const allRowCbs = document.querySelectorAll(".row-checkbox");
+  const selectAllCb = document.getElementById("selectAllCheckbox");
+  
+  if (selectAllCb) {
+    selectAllCb.checked = (allRowCbs.length > 0 && selectedResponseIds.length === allRowCbs.length);
+  }
+  updateDeleteSelectedButton();
+}
+
+// '선택 삭제' 상단 버튼 디자인 상태 업데이트
+function updateDeleteSelectedButton() {
+  const btn = document.getElementById("btnDeleteSelected");
+  const countSpan = document.getElementById("selectedCount");
+  
+  if (btn && countSpan) {
+    const count = selectedResponseIds.length;
+    countSpan.innerText = count;
+    btn.disabled = count === 0;
+  }
+}
+
+// 개별 삭제 모달 열기
+function openDeleteModal(id) {
+  activeDeleteId = id;
+  activeDeleteIds = [];
+  
+  document.getElementById("deleteModalMsg").innerText = "정말 이 응답 데이터를 삭제하시겠습니까?";
+  document.getElementById("deleteModal").classList.add("active");
+}
+
+// 일괄 삭제 모달 열기
+function openBatchDeleteModal() {
+  if (selectedResponseIds.length === 0) return;
+  activeDeleteId = null;
+  activeDeleteIds = [...selectedResponseIds];
+  
+  document.getElementById("deleteModalMsg").innerText = `정말 선택한 ${activeDeleteIds.length}개의 응답 데이터를 모두 일괄 삭제하시겠습니까?`;
+  document.getElementById("deleteModal").classList.add("active");
+}
+
+// 모달 닫기
+function closeDeleteModal() {
+  document.getElementById("deleteModal").classList.remove("active");
+  activeDeleteId = null;
+  activeDeleteIds = [];
+}
+
+// 실제 삭제 승인 실행
+async function confirmDelete() {
+  const confirmBtn = document.getElementById("btnConfirmDelete");
+  const originalHtml = confirmBtn.innerHTML;
+
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = `<span class="spinner"></span> 삭제 중...`;
+
+  try {
+    if (activeDeleteId) {
+      // 개별 삭제 API
+      await window.dbService.deleteResponse(activeDeleteId);
+    } else if (activeDeleteIds.length > 0) {
+      // 일괄 삭제 API
+      await window.dbService.deleteResponses(activeDeleteIds);
+    }
+
+    closeDeleteModal();
+    
+    // 삭제 후 선택 체크 목록 해제
+    selectedResponseIds = [];
+    document.getElementById("selectAllCheckbox").checked = false;
+    updateDeleteSelectedButton();
+    
+    // 대시보드 리로드 및 렌더링
+    await loadDashboardData();
+    
+  } catch (error) {
+    console.error("데이터 삭제 실패:", error);
+    alert("데이터를 삭제하는 데 실패했습니다. 네트워크 상태 및 파이어베이스 설정을 확인해 주세요.");
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = originalHtml;
+  }
+}
+
+// 5. SheetJS를 활용한 엑셀 파일 다운로드
 function downloadExcel() {
   if (surveyResponses.length === 0) {
     alert("다운로드할 데이터가 없습니다.");
