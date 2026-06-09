@@ -21,6 +21,43 @@ const charts = {
   improved: null
 };
 
+// 상단 대형 네비게이션 탭 전환 제어
+function switchNavTab(tabKey) {
+  const tabDashboard = document.getElementById("tabContentDashboard");
+  const tabTable = document.getElementById("tabContentTable");
+  const btnDashboard = document.getElementById("navTabDashboard");
+  const btnTable = document.getElementById("navTabTable");
+
+  if (!tabDashboard || !tabTable || !btnDashboard || !btnTable) return;
+
+  if (tabKey === 'dashboard') {
+    tabDashboard.style.display = "flex";
+    tabTable.style.display = "none";
+    btnDashboard.classList.add("active");
+    btnTable.classList.remove("active");
+
+    // 숨겨진 컨테이너에서 드러날 때 차트가 찌그러지는 현상 리사이즈로 예방
+    setTimeout(() => {
+      Object.keys(charts).forEach(key => {
+        if (charts[key]) {
+          charts[key].resize();
+          charts[key].update();
+        }
+      });
+    }, 50);
+  } else if (tabKey === 'table') {
+    tabDashboard.style.display = "none";
+    tabTable.style.display = "flex";
+    btnDashboard.classList.remove("active");
+    btnTable.classList.add("active");
+    
+    // 테이블 다시 그리기 (혹시 모를 렌더링 최적화)
+    renderTable();
+  }
+
+  lucide.createIcons();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // Lucide 아이콘 초기화
   lucide.createIcons();

@@ -561,3 +561,90 @@
   transform: translateY(-1px);
 }
 
+/* --- 상단 네비게이션 탭 스타일 --- */
+.admin-nav-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  gap: 8px;
+  align-self: flex-start;
+  margin-bottom: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.nav-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-smooth);
+}
+
+.nav-tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nav-tab-btn.active {
+  color: #ffffff;
+  background: var(--accent-gradient);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* 탭 전환 페이드인 연출 */
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* --- 라이트 모드 전용 로그인 오버레이 / 인풋 스타일 보강 --- */
+@media (prefers-color-scheme: light) {
+  .admin-nav-tabs {
+    background: rgba(0, 0, 0, 0.02);
+  }
+  
+  .nav-tab-btn.active {
+    color: #ffffff; /* 라이트 모드에서도 엑티브 탭 글자는 화이트 유지 */
+  }
+
+  .login-overlay {
+    background: rgba(240, 240, 245, 0.8) !important; /* 라이트 톤 블러 배경 */
+  }
+  
+  .login-card {
+    background: rgba(255, 255, 255, 0.8) !important; /* 밝은 카드 바디 */
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  .login-title {
+    color: #1d1d1f !important;
+  }
+  
+  .login-desc {
+    color: #86868b !important;
+  }
+  
+  .tech-input {
+    color: #1d1d1f !important; /* 라이트 모드에서 인풋 글자색이 반드시 어둡게 보이도록 처리 */
+    border-bottom-color: rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .tech-input::placeholder {
+    color: #a1a1a6 !important;
+  }
+  
+  .tech-input:focus {
+    border-bottom-color: var(--border-focus) !important;
+  }
+}
+
+
