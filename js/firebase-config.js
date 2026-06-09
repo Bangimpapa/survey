@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 // SHA-256 해시 검증용 해시값 (비밀번호: axteam1!)
-const ADMIN_PASSWORD_HASH = "83e58914b304c5bb20d6f461a2939db278ec6b51eb5e28a506825c04e76a6669";
+const ADMIN_PASSWORD_HASH = "61b8255d09e55e9c7a91d41c88117d4e9e25a37aa2636e94426068fb130ac08d";
 
 // SHA-256 해싱 함수 (Web Crypto API 사용)
 async function sha256(message) {
